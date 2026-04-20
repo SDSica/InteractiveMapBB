@@ -66,7 +66,7 @@ class OverworldScene extends Phaser.Scene {
 
     preload() {
         // Tilesets - Add your other tileset images here
-        this.load.image('tileset', 'Assets/TilesetMap.png');
+        this.load.image('tileset', 'TilesetMap.png');
 
         // The Tilemap JSON
         this.load.tilemapTiledJSON('overworld_map', 'OverworldMap.json');
