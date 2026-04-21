@@ -213,8 +213,8 @@ class OverworldScene extends Phaser.Scene {
 
 const config = {
     type: Phaser.AUTO,
-    width: 1280,
-    height: 720,
+    width: 640,
+    height: 360,
     parent: 'game-container',
     render: {
         pixelArt: true,
