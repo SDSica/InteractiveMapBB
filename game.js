@@ -221,10 +221,10 @@ const config = {
         antialias: false,
         roundPixels: true
     },
-    /*scale: {
+    scale: {
         mode: Phaser.Scale.FIT, // Scaled to fit browser window
         autoCenter: Phaser.Scale.CENTER_BOTH
-    },*/
+    },
     
     scene: [OverworldScene, IslandDetailScene]
 };
