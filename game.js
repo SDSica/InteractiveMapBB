@@ -82,7 +82,7 @@ class OverworldScene extends Phaser.Scene {
 
         // 1. Initialize the Map
         const map = this.make.tilemap({ key: 'overworld_map' });
-        this.cameras.main.fadeIn(500, 0, 0, 0);
+        //this.cameras.main.fadeIn(500, 0, 0, 0); Map wird beim Erstaufruf nicht richtig gepainted - überprüfen ob es mit dem fadeIn zusammenhängt.
         const vignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.8, 0.35);
         this.islandLabel = this.add.text(645, 480, '', {
             fontFamily: '"Press Start 2P"', // Standard "Retro" web stack
