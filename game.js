@@ -213,18 +213,18 @@ class OverworldScene extends Phaser.Scene {
 
 const config = {
     type: Phaser.AUTO,
-    width: 640,
-    height: 360,
+    width: 1280,
+    height: 720,
     parent: 'game-container',
     render: {
         pixelArt: true,
         antialias: false,
         roundPixels: true
     },
-    scale: {
+    /*scale: {
         mode: Phaser.Scale.FIT, // Scaled to fit browser window
         autoCenter: Phaser.Scale.CENTER_BOTH
-    },
+    },*/
     
     scene: [OverworldScene, IslandDetailScene]
 };
