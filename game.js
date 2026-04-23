@@ -12,9 +12,42 @@ class IslandDetailScene extends Phaser.Scene {
     preload() {
         this.load.tilemapTiledJSON(this.mapID, `${this.mapID}.json`);
         this.load.image('tileset', 'TilesetMap.png');
+
+        this.load.spritesheet('portraits', 'TilesetMap.png', {
+            frameWidth: 32, // Adjust to the size of your portrait art
+            frameHeight: 32
+        });
+        /*
+        this.load.spritesheet('old_man_idle', 'TilesetMap.png', {
+            frameWidth: 16,
+            frameHeight: 16
+        });
+        */
     }
 
     create() {
+        this.objectsLabel = this.add.text(645, 480, '', {
+            fontFamily: '"Press Start 2P"', // Standard "Retro" web stack
+            fontSize: '10px',
+            fontStyle: 'normal',
+            fill: '#000000',
+            stroke: '#7a7878',
+            strokeThickness: 0,
+            shadow: {
+                offsetX: 1,
+                offsetY: 1,
+                color: '#676565',
+                blur: 0,
+                stroke: true,
+                fill: true
+            },
+            align: 'center',
+            wordWrap: { width: 250, useAdvancedWrap: true }
+        })
+            .setOrigin(0.5)
+            .setDepth(1000)
+            .setScrollFactor(0);
+
         this.cameras.main.fadeIn(500, 0, 0, 0);
         console.log(`Welcome to ${this.displayName}`);
 
@@ -23,18 +56,31 @@ class IslandDetailScene extends Phaser.Scene {
 
         map.createLayer('WaterLayer', tileset, 0, 0);
         map.createLayer('Borders', tileset, 0, 0);
-        map.createLayer('Island', tileset, 0,0);
+        map.createLayer('Island', tileset, 0, 0);
+        map.createLayer('DialogueBox', tileset, 0, 0);
+        map.createLayer('Flora', tileset, 0, 0);
+        map.createLayer('Structures', tileset, 0, 0);
 
+        this.objectsInteract = {
+            'Objects1': map.createLayer('Objects1', [tileset, 0, 0]),
+            'Objects2': map.createLayer('Objects2', [tileset, 0, 0]),
+            'Objects3': map.createLayer('Objects3', [tileset, 0, 0]),
+            'Objects4': map.createLayer('Objects4', [tileset, 0, 0]),
+            'Objects5': map.createLayer('Objects5', [tileset, 0, 0]),
 
+        }
 
-        this.add.text(320, 10, this.mapID.toUpperCase(), {
-            fontFamily: '"Press Start 2P"',
-            fontSize: '16px',
-            fill: '#ffffff'
-        }).setOrigin(0.5)
+        Object.values(this.objectsInteract).forEach(layer => {
+            if (layer) layer.setTint(0x999999);
+        });
 
+        this.portrait = this.add.sprite(496, 472, 'portraits')
+            .setOrigin(0.5)
+            .setDepth(1001) // Above the UI
+            .setScrollFactor(0)
+            .setVisible(false); // Hidden by default
 
-        // 4. Simple "Back" Button
+        // Back to map Button
         const backBtn = this.add.text(50, 10, ' <MAP', {
             fontFamily: '"Press Start 2P"',
             fontSize: '16px',
@@ -42,22 +88,100 @@ class IslandDetailScene extends Phaser.Scene {
         }).setOrigin(0.5)
             .setInteractive()
             .on('pointerdown', () => {
-                
+
                 this.input.enabled = false;
                 this.cameras.main.fadeOut(500, 0, 0, 0);
                 this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-
                     this.scene.start('OverworldScene');
                 });
-
             });
+
         this.cameras.main.setZoom(2);
         this.cameras.main.centerOn(map.widthInPixels / 2, map.heightInPixels / 2);
         this.cameras.main.setBackgroundColor('#374647');
 
-    }
-}
+        
+        const triggerLayer = map.getObjectLayer('Triggers1');
+        /*this.anims.create({
+            key: 'old_man_move',
+            // Replace 500 and 501 with the actual indices of the two frames
+            frames: this.anims.generateFrameNumbers('old_man_idle', { frames: [5106, 5026] }),
+            frameRate: 2, // Slow toggle for an idle feel
+            repeat: -1    // Loop forever
+        });
+        this.objectsInteract['Objects1'].setVisible(false);
+        const oldManData = triggerLayer.objects.find(obj => obj.name === 'Objects1');
+        if (oldManData) {
+            const sprite = this.add.sprite(oldManData.x, oldManData.y, 'old_man_idle');
+            sprite.setOrigin(0, 0); // Match Tiled's top-left origin
+            sprite.play('old_man_move');
+        }
+            */
+        if (triggerLayer) {
+            triggerLayer.objects.forEach(obj => {
+                const zone = this.add.zone(obj.x, obj.y, obj.width, obj.height)
+                    .setOrigin(0, 0)
+                    .setInteractive(
+                        new Phaser.Geom.Rectangle(0, 0, obj.width, obj.height),
+                        Phaser.Geom.Rectangle.Contains
+                    );
 
+                zone.targetName = obj.name;
+
+                zone.on('pointerover', () => {
+
+                    const rawProps = obj.properties || [];
+                    const props = rawProps.reduce((acc, p) => ({ ...acc, [p.name]: p.value }), {});
+                    this.objectsLabel.setText(props.displayName || zone.targetName);
+
+                    // --- Highlight Logic ---
+
+                    const targetLayer = this.objectsInteract[zone.targetName];
+                    if (targetLayer) {
+                        targetLayer.setTint(0xFFFFFF);
+                    }
+
+                });
+
+                zone.on('pointerout', () => {
+                    this.objectsLabel.setText('');
+                    this.portrait.setVisible(false);
+
+                    // Reset specific layer
+                    const targetLayer = this.objectsInteract[zone.targetName];
+                    if (targetLayer) {
+                        targetLayer.setTint(0x999999);
+                    }
+                });
+
+                zone.on('pointerdown', () => {
+                    const rawProps = obj.properties || [];
+                    const props = rawProps.reduce((acc, p) => ({ ...acc, [p.name]: p.value }), {});
+                    if (props.dialogString) {
+
+                        if (props.portraitFrame !== undefined) {
+                            this.portrait.setFrame(props.portraitFrame);
+                            this.portrait.setVisible(true);
+                            this.tweens.add({
+                                targets: this.portrait,
+                                scale: { from: 0.5, to: 1 },
+                                duration: 200,
+                                ease: 'Back.easeOut'
+                            });
+                        } else {
+                            this.portrait.setVisible(false); // Hide if it's just an object (like a sign)
+                        }
+                        // Update the label to show the full dialogue
+                        this.objectsLabel.setText(props.dialogString);
+                    }
+                    if (props.url) window.open(props.url, '_blank');
+                });
+
+            });
+        }
+    }
+
+}
 
 class OverworldScene extends Phaser.Scene {
     constructor() {
@@ -82,11 +206,11 @@ class OverworldScene extends Phaser.Scene {
 
         // 1. Initialize the Map
         const map = this.make.tilemap({ key: 'overworld_map' });
-        //this.cameras.main.fadeIn(500, 0, 0, 0); Map wird beim Erstaufruf nicht richtig gepainted - überprüfen ob es mit dem fadeIn zusammenhängt.
-        const vignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.8, 0.35);
+        //this.cameras.main.fadeIn(500, 0, 0, 0);
+        //const vignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.8, 0.35);
         this.islandLabel = this.add.text(645, 480, '', {
             fontFamily: '"Press Start 2P"', // Standard "Retro" web stack
-            fontSize: '15px',
+            fontSize: '10px',
             fontStyle: 'normal',
             fill: '#000000', // Crisp white text
             stroke: '#7a7878', // Heavy outline to mimic shadows
@@ -99,7 +223,8 @@ class OverworldScene extends Phaser.Scene {
                 stroke: true,
                 fill: true
             },
-            align: 'center'
+            align: 'center',
+            wordWrap: { width: 290, useAdvancedWrap: true }
         })
             .setOrigin(0.5)
             .setDepth(1000)
@@ -135,7 +260,7 @@ class OverworldScene extends Phaser.Scene {
             'Island6Front': map.createLayer('Island6Front', [tileset]),
             'Island7': map.createLayer('Island7', [tileset, 0, 0]),
             'Island7Front': map.createLayer('Island7Front', [tileset]),
-            //'Flags' : map.createLayer('Flags', [tileset])
+
         };
 
 
@@ -159,9 +284,6 @@ class OverworldScene extends Phaser.Scene {
                     );
 
                 zone.targetName = obj.name;
-
-
-
                 zone.on('pointerover', () => {
 
                     // --- UI Update ---
@@ -197,7 +319,7 @@ class OverworldScene extends Phaser.Scene {
 
                 zone.on('pointerdown', () => {
 
-                    
+
                     this.input.enabled = false;
                     this.cameras.main.fadeOut(500, 0, 0, 0);
                     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
@@ -206,8 +328,6 @@ class OverworldScene extends Phaser.Scene {
                 });
             });
         }
-
-
     }
 }
 
@@ -223,9 +343,8 @@ const config = {
     },
     scale: {
         mode: Phaser.Scale.FIT, // Scaled to fit browser window
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    
     scene: [OverworldScene, IslandDetailScene]
 };
 
