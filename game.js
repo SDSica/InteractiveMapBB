@@ -68,8 +68,8 @@ class IslandDetailScene extends Phaser.Scene {
         this.activeGlows = {};
         Object.entries(this.objectsInteract).forEach(([key, layer]) => {
             if (layer) {
-                layer.setTint(0xFFFFFF); 
-                
+                layer.setTint(0xFFFFFF);
+
                 this.activeGlows[key] = layer.postFX.addGlow(0xffffff, 2, 0);
                 this.tweens.add({
                     targets: this.activeGlows[key],
@@ -90,10 +90,20 @@ class IslandDetailScene extends Phaser.Scene {
             .setVisible(false); // Hidden by default
 
         //Map Button -> CHANGE
-        const backBtn = this.add.text(50, 10, ' <MAP', {
+        const backBtn = this.add.text(568, 280, ' <MAP', {
             fontFamily: '"Press Start 2P"',
             fontSize: '16px',
-            fill: '#ffffff'
+            fill: '#faf600',
+            stroke: '#0e0d0d',
+            strokeThickness: 1,
+            shadow: {
+                offsetX: 1,
+                offsetY: 1,
+                color: '#676565',
+                blur: 0,
+                stroke: true,
+                fill: true
+            },
         }).setOrigin(0.5)
             .setInteractive()
             .on('pointerdown', () => {
@@ -136,13 +146,13 @@ class IslandDetailScene extends Phaser.Scene {
                         targetLayer.postFX.remove(this.activeGlows[zone.targetName]);
                         this.activeGlows[zone.targetName] = null;
 
-                        
+
                     }
 
                 });
 
                 zone.on('pointerout', () => {
-                   
+
 
                     const targetLayer = this.objectsInteract[zone.targetName];
                     if (targetLayer && !this.activeGlows[zone.targetName]) {
@@ -152,6 +162,11 @@ class IslandDetailScene extends Phaser.Scene {
                 });
 
                 zone.on('pointerdown', () => {
+                    const targetLayer = this.objectsInteract[zone.targetName];
+                    if (targetLayer) {
+                        targetLayer.setTint(0x999999);
+                    }
+
                     this.portrait.setVisible(false);
                     const rawProps = obj.properties || [];
                     const props = rawProps.reduce((acc, p) => ({ ...acc, [p.name]: p.value }), {});
@@ -187,25 +202,14 @@ class OverworldScene extends Phaser.Scene {
     }
 
     preload() {
-        // Tilesets - Add your other tileset images here
         this.load.image('tileset', 'TilesetMap.png');
-
-        // The Tilemap JSON
         this.load.tilemapTiledJSON('overworld_map', 'OverworldMap.json');
-
-        this.load.spritesheet('flag_anim', 'Assets/FlagsTileset.png', {
-            frameWidth: 40, // Match your tile width
-            frameHeight: 20 // Match your tile height
-        });
-
     }
 
     create() {
-
-        // 1. Initialize the Map
         const map = this.make.tilemap({ key: 'overworld_map' });
-        this.cameras.main.fadeIn(500, 0, 0, 0); //Map wird beim Erstaufruf nicht richtig gepainted - überprüfen ob es mit dem fadeIn zusammenhängt.
-        
+        this.cameras.main.fadeIn(500, 0, 0, 0);
+
         this.islandLabel = this.add.text(480, 455, '', {
             fontFamily: '"Press Start 2P"', // Standard "Retro" web stack
             fontSize: '15px',
@@ -231,40 +235,36 @@ class OverworldScene extends Phaser.Scene {
 
         const tileset = map.addTilesetImage('TilesetMap', 'tileset');
 
-        
         map.createLayer('WaterLayer', tileset, 0, 0);
         map.createLayer('BorderLayer', tileset, 0, 0);
         map.createLayer('DialogueBox', tileset, 0, 0)
-       
 
-        
         this.islands = {
             'Island1': map.createLayer('Island1', [tileset, 0, 0]),
-            'Island1Front': map.createLayer('Island1Front', [tileset]),
             'Island2': map.createLayer('Island2', [tileset, 0, 0]),
-            'Island2Front': map.createLayer('Island2Front', [tileset]),
             'Island3': map.createLayer('Island3', [tileset, 0, 0]),
-            'Island3Front': map.createLayer('Island3Front', [tileset]),
             'Island4': map.createLayer('Island4', [tileset, 0, 0]),
-            'Island4Front': map.createLayer('Island4Front', [tileset]),
             'Island5': map.createLayer('Island5', [tileset, 0, 0]),
-            'Island5Front': map.createLayer('Island5Front', [tileset]),
             'Island6': map.createLayer('Island6', [tileset, 0, 0]),
-            'Island6Front': map.createLayer('Island6Front', [tileset]),
             'Island7': map.createLayer('Island7', [tileset, 0, 0]),
-            'Island7Front': map.createLayer('Island7Front', [tileset]),
-            
         };
+
+        map.createLayer('Island1Front', tileset, 0, 0)
+        map.createLayer('Island2Front', tileset, 0, 0)
+        map.createLayer('Island3Front', tileset, 0, 0)
+        map.createLayer('Island4Front', tileset, 0, 0)
+        map.createLayer('Island5Front', tileset, 0, 0)
+        map.createLayer('Island6Front', tileset, 0, 0)
+        map.createLayer('Island7Front', tileset, 0, 0)
 
         this.activeGlows = {};
         Object.entries(this.islands).forEach(([key, layer]) => {
             if (layer) {
-                layer.setTint(0xFFFFFF); 
-                
+                layer.setTint(0xFFFFFF);
                 this.activeGlows[key] = layer.postFX.addGlow(0xffffff, 2, 0);
                 this.tweens.add({
                     targets: this.activeGlows[key],
-                    outerStrength: 2, // Pulse from 2 to 4
+                    outerStrength: 4,
                     duration: 1500,
                     yoyo: true,
                     repeat: -1,
@@ -273,12 +273,9 @@ class OverworldScene extends Phaser.Scene {
             }
         });
 
-        // Fit to Browser 
         this.cameras.main.setZoom(2);
         this.cameras.main.centerOn(map.widthInPixels / 2, map.heightInPixels / 2);
         this.cameras.main.setBackgroundColor('#374647');
-
-       
 
         const triggerLayer = map.getObjectLayer('Triggers');
         if (triggerLayer) {
@@ -291,12 +288,9 @@ class OverworldScene extends Phaser.Scene {
                     );
 
                 zone.targetName = obj.name;
-
                 zone.on('pointerover', () => {
 
-                    // --- UI Update ---
-
-                    console.log("Hover detected for:", zone.targetName); //Debug
+                    //console.log("Hover detected for:", zone.targetName); //Debug
                     const rawProps = obj.properties || [];
                     const props = rawProps.reduce((acc, p) => ({ ...acc, [p.name]: p.value }), {});
                     this.islandLabel.setText(props.displayName || obj.name);
@@ -306,13 +300,10 @@ class OverworldScene extends Phaser.Scene {
                     if (targetLayer && this.activeGlows[zone.targetName]) {
                         targetLayer.postFX.remove(this.activeGlows[zone.targetName]);
                         this.activeGlows[zone.targetName] = null;
-
-                        
                     }
                 });
 
                 zone.on('pointerout', () => {
-                   
                     const targetLayer = this.islands[zone.targetName];
                     if (targetLayer && !this.activeGlows[zone.targetName]) {
                         targetLayer.setTint(0xFFFFFF);
@@ -321,8 +312,6 @@ class OverworldScene extends Phaser.Scene {
                 });
 
                 zone.on('pointerdown', () => {
-
-
                     this.input.enabled = false;
                     this.cameras.main.fadeOut(500, 0, 0, 0);
                     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
@@ -331,8 +320,6 @@ class OverworldScene extends Phaser.Scene {
                 });
             });
         }
-
-
     }
 }
 
@@ -344,7 +331,7 @@ class StartScene extends Phaser.Scene {
     preload() {
         this.load.tilemapTiledJSON('startscene_map', 'StartScene.json');
         this.load.image('tileset', 'TilesetMap.png');
-        this.load.image('input', 'Input.png')
+        
 
         this.load.spritesheet('portraits', 'TilesetMap.png', {
             frameWidth: 32,
@@ -356,7 +343,7 @@ class StartScene extends Phaser.Scene {
         this.isIntroActive = true;
 
         this.introDialogue = this.add.text(645, 340, '', {
-            fontFamily: '"Press Start 2P"', // Standard "Retro" web stack
+            fontFamily: '"Press Start 2P"',
             fontSize: '27px',
             fontStyle: 'normal',
             fill: '#000000',
@@ -376,7 +363,7 @@ class StartScene extends Phaser.Scene {
             .setOrigin(0.5)
             .setDepth(2001)
             .setScrollFactor(0);
-        this.objectsLabel = this.add.text(645, 480, '', {
+        this.objectsLabel = this.add.text(460, 455, '', {
             fontFamily: '"Press Start 2P"', // Standard "Retro" web stack
             fontSize: '10px',
             fontStyle: 'normal',
@@ -402,6 +389,7 @@ class StartScene extends Phaser.Scene {
 
         const map = this.make.tilemap({ key: 'startscene_map' });
         const tileset = map.addTilesetImage('TilesetMap', 'tileset');
+        
 
         //Statische Layer
         map.createLayer('WaterLayer', tileset, 0, 0);
@@ -409,19 +397,38 @@ class StartScene extends Phaser.Scene {
         map.createLayer('Island', tileset, 0, 0);
         map.createLayer('Structures', tileset, 0, 0);
         map.createLayer('Flora', tileset, 0, 0);
+        map.createLayer('DialogueBox2', tileset, 0, 0);
+        
 
         //Intro Dialog Layer
         this.dialogueInteract = {
             'ButtonLayer': map.createLayer('ButtonLayer', [tileset], 0, 0).setDepth(2000),
             'DialogueBox': map.createLayer('DialogueBox', [tileset], 0, 0).setDepth(1999)
         }
-        this.introDialogue.setText("Welcome! Click the Button to start your journey lorem ipsum");
+        this.introDialogue.setText("Welcome! Click to start your journey lorem ipsum");
 
         //Interaktive Layer
         this.objectsInteract = {
             'Objects1': map.createLayer('Objects1', [tileset, 0, 0]),
             'Objects2': map.createLayer('Objects2', [tileset, 0, 0]),
         }
+
+        this.activeGlows = {};
+        Object.entries(this.objectsInteract).forEach(([key, layer]) => {
+            if (layer) {
+                layer.setTint(0xFFFFFF);
+
+                this.activeGlows[key] = layer.postFX.addGlow(0xffffff, 2, 0);
+                this.tweens.add({
+                    targets: this.activeGlows[key],
+                    outerStrength: 4, // Pulse from 2 to 4
+                    duration: 1500,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+            }
+        });
 
         this.portrait = this.add.sprite(496, 472, 'portraits')
             .setOrigin(0.5)
@@ -457,19 +464,20 @@ class StartScene extends Phaser.Scene {
                     // --- Highlight Logic ---
 
                     const targetLayer = this.objectsInteract[zone.targetName];
-                    if (targetLayer) {
-                        targetLayer.setTint(0xFFFFFF);
+                    if (targetLayer && this.activeGlows[zone.targetName]) {
+                        targetLayer.postFX.remove(this.activeGlows[zone.targetName]);
+                        this.activeGlows[zone.targetName] = null;
+
                     }
                 });
 
                 zone.on('pointerout', () => {
 
                     if (this.isIntroActive) return;
-
-                    // Reset specific layer
                     const targetLayer = this.objectsInteract[zone.targetName];
-                    if (targetLayer) {
-                        targetLayer.setTint(0x999999);
+                    if (targetLayer && !this.activeGlows[zone.targetName]) {
+                        targetLayer.setTint(0xFFFFFF);
+                        this.activeGlows[zone.targetName] = targetLayer.postFX.addGlow(0xffffff, 2, 0);
                     }
                 });
 
@@ -485,7 +493,6 @@ class StartScene extends Phaser.Scene {
                         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
                             this.scene.start('OverworldScene');
                         });
-
                     }
 
                     if (this.isIntroActive) return;
